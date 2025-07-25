@@ -1,0 +1,135 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+
+public class RegistrationForm extends JFrame {
+    JTextField nameField, mobileField;
+    JRadioButton male, female;
+    JComboBox<String> day, month, year;
+    JTextArea addressArea;
+    JCheckBox terms;
+    JButton submit, reset;
+
+    Connection conn;
+
+    public RegistrationForm() {
+        setTitle("Registration Form");
+        setSize(500, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(null);
+
+        // Fields
+        JLabel nameLabel = new JLabel("Name:");
+        nameLabel.setBounds(30, 30, 100, 25);
+        add(nameLabel);
+
+        nameField = new JTextField();
+        nameField.setBounds(150, 30, 200, 25);
+        add(nameField);
+
+        JLabel mobileLabel = new JLabel("Mobile:");
+        mobileLabel.setBounds(30, 70, 100, 25);
+        add(mobileLabel);
+
+        mobileField = new JTextField();
+        mobileField.setBounds(150, 70, 200, 25);
+        add(mobileField);
+
+        JLabel genderLabel = new JLabel("Gender:");
+        genderLabel.setBounds(30, 110, 100, 25);
+        add(genderLabel);
+
+        male = new JRadioButton("Male");
+        male.setBounds(150, 110, 70, 25);
+        female = new JRadioButton("Female");
+        female.setBounds(220, 110, 70, 25);
+        ButtonGroup genderGroup = new ButtonGroup();
+        genderGroup.add(male);
+        genderGroup.add(female);
+        add(male); add(female);
+
+        JLabel dobLabel = new JLabel("DOB:");
+        dobLabel.setBounds(30, 150, 100, 25);
+        add(dobLabel);
+
+        String[] days = new String[31];
+        for (int i = 1; i <= 31; i++) days[i-1] = String.valueOf(i);
+        day = new JComboBox<>(days);
+        day.setBounds(150, 150, 50, 25);
+        add(day);
+
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        month = new JComboBox<>(months);
+        month.setBounds(210, 150, 70, 25);
+        add(month);
+
+        String[] years = new String[30];
+        for (int i = 1990; i < 2020; i++) years[i-1990] = String.valueOf(i);
+        year = new JComboBox<>(years);
+        year.setBounds(290, 150, 70, 25);
+        add(year);
+
+        JLabel addressLabel = new JLabel("Address:");
+        addressLabel.setBounds(30, 190, 100, 25);
+        add(addressLabel);
+
+        addressArea = new JTextArea();
+        addressArea.setBounds(150, 190, 200, 50);
+        add(addressArea);
+
+        terms = new JCheckBox("Accept Terms And Conditions");
+        terms.setBounds(150, 250, 250, 25);
+        add(terms);
+
+        submit = new JButton("Submit");
+        submit.setBounds(150, 290, 80, 25);
+        add(submit);
+
+        reset = new JButton("Reset");
+        reset.setBounds(250, 290, 80, 25);
+        add(reset);
+
+        submit.addActionListener(e -> saveData());
+
+        setVisible(true);
+    }
+
+    private void saveData() {
+        String name = nameField.getText();
+        String mobile = mobileField.getText();
+        String gender = male.isSelected() ? "Male" : "Female";
+        String dob = day.getSelectedItem() + "-" + month.getSelectedItem() + "-" + year.getSelectedItem();
+        String address = addressArea.getText();
+
+        if (!terms.isSelected()) {
+            JOptionPane.showMessageDialog(this, "Please accept terms.");
+            return;
+        }
+
+        try {
+            if (conn == null) {
+                conn = DriverManager.getConnection("jdbc:sqlite:users.db");
+                Statement stmt = conn.createStatement();
+                stmt.execute("CREATE TABLE IF NOT EXISTS users (name TEXT, mobile TEXT, gender TEXT, dob TEXT, address TEXT)");
+            }
+
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?)");
+            ps.setString(1, name);
+            ps.setString(2, mobile);
+            ps.setString(3, gender);
+            ps.setString(4, dob);
+            ps.setString(5, address);
+            ps.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Data Saved");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        new RegistrationForm();
+    }
+}
